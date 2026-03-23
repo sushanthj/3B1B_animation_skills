@@ -9,10 +9,10 @@ A Manim animation knowledge base for AI coding tools. Clone this repo, run the s
 ## Quickstart
 
 ```bash
-git clone TBD
-cd create_manim_animations
+git clone git@github.com:sushanthj/3B1B_animation_skills.git
+cd 3B1B_animation_skills
 
-# Build the Docker container (requires Docker)
+# Build the Docker container (requires Docker and ideally Nvidia Container Toolkit installed)
 ./launch.sh
 ```
 
