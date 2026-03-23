@@ -1,0 +1,2 @@
+manim>=0.18
+python-pptx>=0.6

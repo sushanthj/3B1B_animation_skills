@@ -1,0 +1,10 @@
+services:
+  manim:
+    build: .
+    user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
+    environment:
+      - XDG_CACHE_HOME=/tmp/.cache
+    volumes:
+      - ..:/manim
+      - /home:/home:ro
+    working_dir: /manim
