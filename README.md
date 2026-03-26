@@ -6,21 +6,31 @@
 
 A Manim animation knowledge base for AI coding tools. Clone this repo, run the setup, and ask your AI to generate 3Blue1Brown-style explainer videos.
 
+## Pre-Requisites
+
+1. Docker Engine
+2. Nvidia Container Toolkit
+
 ## Quickstart
 
 ```bash
 git clone git@github.com:sushanthj/3B1B_animation_skills.git
 cd 3B1B_animation_skills
+```
 
-# Build the Docker container (requires Docker and ideally Nvidia Container Toolkit installed)
+```bash
 ./launch.sh
 ```
 
 Open the repo in **Claude Code**, **Cursor**, **Windsurf**, or **GitHub Copilot**, then ask:
 
-> *"Make an animated explainer about backpropagation"*
+<p align="center">
+  <img src="assets/typing_prompt.gif" alt="Prompt" width="640">
+</p>
 
-The AI reads the skill files, generates Manim code, renders a 720p preview, and shows you the result. Ask for 1080p or 4K when you're happy with it.
+<p align="center">
+  <img src="assets/RobotArmIK_hq_24fps.gif" alt="Output" width="640">
+</p>
 
 When you're done, stop the container and clean up:
 
