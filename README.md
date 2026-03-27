@@ -9,7 +9,7 @@ A Manim animation knowledge base for AI coding tools. Clone this repo, run the s
 ## Pre-Requisites
 
 1. Docker Engine
-2. Nvidia Container Toolkit
+2. (Optional) Nvidia Container Toolkit: To make rendering faster when an Nvidia GPU is available
 
 ## Quickstart
 
