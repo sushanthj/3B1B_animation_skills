@@ -5,7 +5,9 @@
       "Bash(cd:*)",
       "Bash(docker compose:*)",
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(chmod:*)",
+      "Bash(ffmpeg -y -i ProblemScene.mp4 -i ReparamScene.mp4 -i VisualIntuitionScene.mp4 -i GradientFlowScene.mp4 -i PyTorchScene.mp4 -filter_complex \"[0:v][1:v][2:v][3:v][4:v]concat=n=5:v=1:a=0[v]\" -map \"[v]\" -c:v libx264 -crf 18 -preset fast ReparameterizationTrick_Combined.mp4)"
     ]
   }
 }

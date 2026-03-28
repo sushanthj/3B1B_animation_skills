@@ -4,6 +4,7 @@ services:
     user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
     environment:
       - XDG_CACHE_HOME=/tmp/.cache
+      - PYTHONUNBUFFERED=1
     volumes:
       - ..:/manim
       - /home:/home:ro

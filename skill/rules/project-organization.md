@@ -13,7 +13,30 @@ one scene, and a messy `media/` folder. This file shows a project structure that
 all of these: shared style constants, reusable components, per-scene files, and a batch
 render script.
 
-## Recommended Project Layout
+## Scene Chunking Rule
+
+**For long animations (>300 lines or multiple logical sections), ALWAYS split into multiple scene files.**
+
+A single monolithic `scene.py` causes problems:
+- Harder to re-render just one section (partial movie files help but aren't granular enough)
+- More likely to hit memory issues with complex scenes
+- Harder to iterate on individual sections
+- Merge conflicts when multiple agents work in parallel
+
+**Split by logical section:**
+```
+animation_paper_explainer/
+  scene_01_intro.py         # title card + hook
+  scene_02_background.py    # problem setup
+  scene_03_method.py        # core method visualization
+  scene_04_results.py       # results + charts
+  scene_05_conclusion.py    # summary + takeaways
+  video/                    # rendered output
+```
+
+For short/single-concept animations (estimated <300 lines), a single `scene.py` is fine.
+
+## Recommended Project Layout (Full Videos)
 
 ```
 my_video/

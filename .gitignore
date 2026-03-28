@@ -5,3 +5,4 @@ media/
 .venv/
 scene.py
 animations/
+*.mp4

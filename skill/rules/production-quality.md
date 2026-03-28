@@ -6,9 +6,35 @@ tags: [manim, production, quality, alignment, overlap, layout, checklist]
 
 # Production Quality Checklist
 
-## 1. Text Overlap Prevention
+## 1. Text Overlap Prevention (CRITICAL)
 
-**Rule: buff >= 0.5 for edge text**
+Text overlap is the **#1 visual quality issue**. Every scene must actively prevent it.
+
+### 1a. Region Tracking — The Master Rule
+
+**Before placing ANY element, mentally check: "Is something already in this region?"**
+If yes, you MUST `FadeOut` or move the existing element first. This applies to:
+- Title region (top)
+- Bottom note region
+- Main content area (center)
+- Any annotation labels
+
+```python
+# BAD: placing new content without clearing the region
+self.play(Write(title1))
+# ... later ...
+self.play(Write(title2))  # OVERLAPS title1!
+
+# GOOD: always clear first
+self.play(FadeOut(title1))
+self.play(Write(title2))
+# or use ReplacementTransform for smooth transitions
+self.play(ReplacementTransform(title1, title2))
+```
+
+### 1b. Edge Text Buffering
+
+**Rule: buff >= 0.5 for ALL edge-positioned text. No exceptions.**
 ```python
 # BAD
 label.to_edge(DOWN, buff=0.3)
@@ -16,33 +42,59 @@ label.to_edge(DOWN, buff=0.3)
 label.to_edge(DOWN, buff=0.5)
 ```
 
-**Rule: FadeOut previous bottom text before adding new**
+### 1c. Sequential Text in Same Region
+
+**Rule: ALWAYS FadeOut or ReplacementTransform previous text before adding new text in the same screen region.**
 ```python
 # BAD: overlapping bottom text
 self.play(Write(note1))
 self.play(Write(note2))  # overlaps note1!
 
-# GOOD
+# GOOD: replace
 self.play(ReplacementTransform(note1, note2))
-# or
+# or: fade out then write
 self.play(FadeOut(note1))
 self.play(Write(note2))
 ```
 
-**Rule: Reduce font size for dense scenes** -- use LABEL_SIZE (22-24) not BODY_SIZE (30-32) for annotations when many elements are present.
+### 1d. Dense Scenes — Font Size Reduction
 
-**Rule: Use arrange() / arrange_in_grid() for groups**
+**Rule: When a scene has 5+ visible text elements, reduce ALL annotation font sizes.**
+Use LABEL_SIZE (22-24) not BODY_SIZE (30-32) for annotations. Use font_size <= 18 for labels near mobjects.
+
 ```python
-# BAD: manual grid positioning
+# BAD: full-size text everywhere in a busy scene
+label = Text("Step 1: Normalize", font_size=32)  # too large when 6+ items on screen
+
+# GOOD: reduced size for dense scenes
+label = Text("Step 1: Normalize", font_size=22)
+```
+
+### 1e. Group Layout — Never Manual Positioning
+
+**Rule: Use arrange() / arrange_in_grid() for groups. Never position group items manually.**
+```python
+# BAD: manual grid positioning (fragile, overlaps likely)
 for i in range(16):
     sq.move_to(RIGHT * (i % 4) + DOWN * (i // 4))
 
-# GOOD
+# GOOD: automatic layout
 grid = VGroup(*[Square() for _ in range(16)])
 grid.arrange_in_grid(4, 4, buff=0.05)
 ```
 
-**Rule: Labels go next_to their target object, not floating at absolute coords.**
+### 1f. Labels — Relative Positioning Only
+
+**Rule: Labels go `next_to` their target object, not floating at absolute coords.**
+
+### 1g. Width Capping
+
+**Rule: ALL body text must use `safe_text()` or be manually width-checked.**
+Manim has NO auto-wrap. Long text silently overflows the screen.
+```python
+# Use safe_text() from style.py for everything
+note = safe_text("This is a long explanation that could overflow", max_width=12.0)
+```
 
 ## 2. Spatial Layout System
 

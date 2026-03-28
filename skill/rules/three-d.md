@@ -6,6 +6,16 @@ tags: [manim, 3d, surface, camera, threeDScene]
 
 # 3D Scenes, Camera, and Surfaces
 
+## IMPORTANT: Ask Before Using 3D
+
+**3D rendering is significantly slower and more resource-intensive than 2D.** Before writing any 3D scene code:
+
+1. **Ask the user for explicit confirmation** that they want 3D rendering
+2. **Suggest 2D alternatives** if the concept can be effectively communicated in 2D (e.g., isometric projections, layered 2D diagrams, cross-section views)
+3. **Render 3D scenes at 480p 15fps (`-ql`) first** as a preview — only re-render at higher quality if the user requests it
+
+Many concepts that seem to need 3D (surfaces, vector fields, spatial relationships) can be effectively shown with 2D projections, color gradients, or animated cross-sections.
+
 ## How 3D works in Manim
 
 Manim's default `Scene` is 2D. Everything lives on a flat plane, and the camera
