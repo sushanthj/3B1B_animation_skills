@@ -277,3 +277,12 @@ done
 
 echo "All scenes rendered."
 ```
+
+## Rendering several scenes in parallel
+
+Each `manim` process cleans `media/Tex` after every LaTeX compile, which
+races with the other processes. Either add `--no_latex_cleanup` to all of
+them or give each its own `--media_dir`. Concatenate afterwards with the
+ffmpeg concat demuxer (`-f concat -safe 0 -i list.txt -c copy out.mp4`); all
+clips must share resolution, fps and codec, which they do if they come from
+the same quality flag.

@@ -32,6 +32,9 @@ These are the most common failures. Load [rules/troubleshooting.md](rules/troubl
 10. **`get_part_by_tex("missing")` returns None silently** -- check before calling `.set_color()` on the result.
 11. **`reference = mob` is NOT a copy** -- use `mob.copy()` for independent objects.
 12. **Transparent background** -- mp4 has no alpha. Use `--format webm -t`.
+13. **Long `Tex` silently wraps at ~80 chars** -- use a wide `TexTemplate` (geometry package) and `scale_to_fit_width`.
+14. **Parallel renders crash on `.dvi` conversion** -- they share `media/Tex` and delete each other's files. Add `--no_latex_cleanup`.
+15. **3D labels with updaters vanish** -- under Cairo use a fixed-in-frame label moved via `self.camera.project_point(...)`, and re-register `Integer` readouts with `camera.add_fixed_in_frame_mobjects` in the updater (see [rules/three-d.md](rules/three-d.md)).
 
 ## Scripts and Templates
 

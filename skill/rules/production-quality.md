@@ -390,7 +390,29 @@ Count the number of visible elements at each scene's midpoint:
 
 This creates a narrative arc in visual density. Constant density (every scene has 6 elements) feels monotonous. Starting dense overwhelms.
 
-## 15. Post-Render Checklist
+## 15. Verify frames, not code
+
+Render every scene at `-ql`, pull frames with ffmpeg and look at them in a
+contact sheet before trusting the layout. This catches collisions that no
+static check finds (labels on top of grids, mid-crossfade overlaps, ghost
+objects left by `Transform`):
+
+```bash
+for t in 5 12 20 28; do ffmpeg -v error -ss $t -i scene.mp4 -frames:v 1 -y f_$t.png; done
+ffmpeg -v error -i f_5.png -i f_12.png -i f_20.png -i f_28.png \
+  -filter_complex "xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0" -y sheet.png
+```
+
+Then repeat once at the final quality: some overlaps only show at 720p+.
+
+**Rule: sequential caption swaps.** `FadeOut(old)` then `FadeIn(new)` as two
+`play` calls. A simultaneous cross-fade shows both texts for ~0.5 s.
+
+**Rule: remove the pieces you added.** If a group was revealed piecewise
+(`FadeIn(g[0])`, `Create(g[1])`, ...), `self.remove(g)` does nothing; remove
+`*g` (and any sub-parts added by `TransformFromCopy`).
+
+## 16. Post-Render Checklist
 
 1. No text overlapping other text
 2. No text overlapping graphical elements

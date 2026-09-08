@@ -165,6 +165,19 @@ These are worse than crashes because you don't notice until you watch the video.
 
 `mob.animate.shift(RIGHT).scale(2)` and `mob.animate.scale(2).shift(RIGHT)` produce different results. Scale changes the coordinate system, so shift distances change after scaling. Apply transforms in the order you'd do them mentally.
 
+### FadeOut(group) leaves the children behind (they even come back)
+
+```python
+self.play(*[d.animate.move_to(p) for d, p in zip(dots, targets)])   # per-child animate: the scene
+                                                                     # dissolves `dots` into top-level children
+self.play(FadeOut(dots))   # removes nothing (remove() matches whole mobjects), and FadeOut's
+                           # clean-up calls interpolate(0): the children pop back at full opacity
+```
+
+Fix: move the children with one whole-group animation, `Transform(dots, dots_at_targets)`, or after
+per-child animations fade and remove them one by one: `self.play(*[FadeOut(d) for d in dots])` /
+`self.remove(*dots)`.  Same for a `LaggedStart` of per-child animations.
+
 ### Transform chains leave ghost objects
 
 ```python
@@ -292,3 +305,44 @@ manim --renderer opengl scene.py MyScene
 | Many objects | Use `VGroup` and batch operations instead of individual animations |
 | Long videos | Use `self.next_section()` to render sections independently |
 | Final render | `manim -qh` (1080p) or `manim -qk` (4K) |
+
+## Text and captions
+
+### Long Tex wraps onto a second line at ~80 characters
+
+**Cause:** Manim's default `standalone` template inherits the article text
+width, so a long caption silently wraps and the second line dangles.
+
+**Fix:** use a very wide page and cap the width yourself:
+```python
+WIDE_TEX = TexTemplate()
+WIDE_TEX.add_to_preamble(r"\usepackage[paperwidth=300cm,paperheight=30cm,textwidth=290cm]{geometry}")
+t = Tex(s, font_size=30, tex_template=WIDE_TEX)
+if t.width > 12.6:
+    t.scale_to_fit_width(12.6)
+```
+Explicit `\\` line breaks still work inside the (default) `center` environment.
+
+### Two captions visible at once during a swap
+
+`self.play(FadeOut(old), FadeIn(new))` overlaps the two texts for the whole
+cross-fade. If the brief requires no overlapping text, swap sequentially:
+`self.play(FadeOut(old), run_time=0.3)` then `self.play(FadeIn(new), ...)`.
+
+### Stray glyphs or a missing number in a ThreeDScene readout
+
+`Integer.set_value` / `always_redraw` create submobjects that were never
+registered as fixed-in-frame, so Cairo projects them as 3D objects. Call
+`self.camera.add_fixed_in_frame_mobjects(group)` inside the updater. See
+[three-d.md](three-d.md).
+
+## Parallel renders
+
+### "Your installation does not support converting .dvi files to SVG" (random, only when rendering several scenes at once)
+
+**Cause:** every Manim process deletes all non-SVG files in the shared
+`media/Tex` directory after each compile, so it can delete another process's
+`.dvi` before dvisvgm reads it. A stalled process with 0% CPU is the same race.
+
+**Fix:** add `--no_latex_cleanup` to every render that shares a media dir, or
+give each parallel render its own `--media_dir`. Clean `media/Tex` afterwards.

@@ -301,3 +301,125 @@ field_3d = ArrowVectorField(
 
 
 For a complete worked example combining axes, surfaces, shapes, labels, and camera animation, see [equation-derivations.md](equation-derivations.md) for the pattern (same structure applies to 3D scenes).
+
+## Manim CE 0.20 + Cairo: what actually works (learned on real projects)
+
+The notes above describe the API. These are the behaviours that bit us when
+building a 3D explainer (sphere, tangent planes, unrolling into a map) with the
+default Cairo renderer in Manim CE v0.20. Treat them as rules.
+
+### Draw order and depth sorting
+
+- Only `Surface` (and `Dot3D`, `Line3D`, ... which are surfaces) take part in
+  depth sorting, and they are sorted **per face by the face centre**. A `Sphere`
+  or a hand-written `Surface` therefore occludes itself correctly.
+- Every flat `VMobject` (Line, Polygon, MathTex, Dot) is drawn **after all
+  surfaces, always on top**, regardless of its 3D position. Use this: rays and
+  labels inside a translucent sphere stay visible. Do not expect a `Line` to be
+  hidden behind a `Surface`.
+- Two surfaces at the same depth (e.g. a patch drawn on a sphere) z-fight per
+  face. Put the patch at `radius * 1.01` and the sphere at `radius`.
+- A translucent sphere: `Surface(..., resolution=(12, 6))` with
+  `set_fill(GREY_B, opacity=0.07)` and `set_stroke(GREY_B, width=0.6,
+  opacity=0.35)`. The mesh lines double as a 30-degree graticule. `(24, 12)` is
+  visibly busy at 720p.
+- `Surface(...)` ignores `fill_color=` kwargs in favour of `checkerboard_colors`.
+  Always call `surf.set_fill(color, opacity=...)` and `surf.set_stroke(...)`
+  after construction.
+
+### Text and labels in a ThreeDScene
+
+- `add_fixed_in_frame_mobjects` records the fixed status **per family member
+  at call time**. Anything that creates new submobjects later, such as
+  `Integer.set_value`, `DecimalNumber.set_value`, or an `always_redraw` whose
+  structure changes, leaks unregistered pieces that are then drawn as 3D
+  objects (stray glyphs near the origin). Re-register inside the updater:
+
+  ```python
+  def upd(g):
+      num.set_value(tracker.get_value())
+      g.arrange(RIGHT).move_to(pos)
+      self.camera.add_fixed_in_frame_mobjects(g)   # camera-level, no scene add
+  readout.add_updater(upd)
+  ```
+
+- `add_fixed_orientation_mobjects` plus a position updater does **not** render
+  reliably (the label vanishes or squashes). For a label that must follow a
+  moving 3D point, keep it fixed-in-frame and move it through the camera's own
+  projection:
+
+  ```python
+  lbl = MathTex(r"\lambda_c")
+  lbl.add_updater(lambda m: m.move_to(self.camera.project_point(point_fn())))
+  self.add_fixed_in_frame_mobjects(lbl)
+  ```
+
+  This survives `move_camera` and ambient rotation.
+- Static billboards (`add_fixed_orientation_mobjects` without an updater) are
+  fine. Add them, then `self.remove(m)` so you can `FadeIn` later.
+- Fixed-in-frame captions live in ordinary 2D frame coordinates. Keep a caption
+  band (y = -3.05) and a title band (`to_edge(UP, buff=0.35)`) exactly as in a
+  2D scene.
+
+### Camera moves that read well
+
+- A "side view" of a construction is worth the camera move: `move_camera(phi=90*DEGREES,
+  theta=-180*DEGREES)` looks along +x with -y to the right and z up, so anything
+  built in the x = 0 plane appears in true shape. Add the labels **after** the
+  move (projection is only meaningful once the camera is static), fade them
+  before moving back.
+- `move_camera(..., added_anims=[Transform(a, b), ...])` runs geometry
+  animations during the move. Unrolling a sphere is exactly this: two
+  `Surface`s with identical `resolution` and `(u, v)` ranges, one on the sphere
+  and one flat, plus `Transform(sphere, flat)`. Interpolation is face by face.
+- With `phi=90, theta=-90` and `zoom=1`, world `(x, 0, z)` lands at screen
+  `(x, z)`, so flat 2D annotations (ticks, boxes) can be fixed-in-frame objects
+  positioned with plain 2D coordinates.
+- Any two `Transform`ed geometries that should move "along rays" (plane onto
+  sphere, disc wrapping onto a cap) only need the same parametrisation:
+  `Transform` moves each vertex on a straight line, which *is* the ray when
+  both points lie on it.
+
+### Side-by-side 3D comparisons
+
+- Put two constructions at `LC = (-3.3, 0, 0)` and `RC = (3.3, 0, 0)` with the
+  camera at `theta=-90*DEGREES`: world x maps straight to screen x, so
+  fixed-in-frame column labels at x = -3.3 / +3.3 line up with the objects.
+- To give one of them a side view, `move_camera(phi=90*DEGREES,
+  theta=-180*DEGREES, frame_center=LC, added_anims=[FadeOut(other_group)])`.
+  `frame_center` re-centres the camera on that object at the normal distance,
+  and fading the other column avoids it sitting behind the first along the
+  view axis. Use the same `theta` for both columns so labels keep the same
+  screen-side conventions; do not mirror one with `theta=0`.
+- Caveat (Cairo, 0.20): a non-zero `frame_center` also shifts every
+  `add_fixed_in_frame_mobjects` title/caption by `-frame_center` (the base
+  camera subtracts it at pixel time). If the scene has fixed-in-frame text, keep
+  `frame_center` at ORIGIN and translate the 3D construction instead (build it at
+  `-LOOK`), or the title gets cut off at the top and captions float upward.
+- Big tangent planes (a 120 deg pinhole's plane is 3.5 sphere radii wide)
+  overflow a two-column frame. Draw that column's sphere smaller (`R=1.0`)
+  rather than moving the plane inside the sphere.
+
+### Speed
+
+- A whole 3D explainer scene (translucent sphere, several patch surfaces,
+  `always_redraw` groups) renders at roughly 15 fps at 480p15 and a few fps at
+  720p30. Cairo is fine; do not reach for OpenGL for this.
+- `Dot3D(..., resolution=(6, 6))` is plenty for markers.
+
+## Showing *why* a projection differs (camera-model scenes)
+
+A footprint that is "obviously wrong" to the viewer is usually just unexplained.
+When two cameras of different FOV wrap onto a direction sphere, draw the cause:
+
+- Put the camera dot at the sphere centre and the sensor at the distance where the
+  FOV wedge (two rays from the centre, plus a small arc labelled with the FOV)
+  passes exactly through the sensor's edges: `d = half_width / tan(FOV/2)`.
+  Same-size sensors then sit far out for a narrow lens and close in for a wide one,
+  which is the whole explanation.
+- Run the paper's equations on a lat/long sample grid and show the resulting
+  pixels as colour-matched dots on both the sphere and the sensor, with one worked
+  example (`(λ, φ) = (0°, 20°) → (u, v) = (800, 300)`) as a fixed-in-frame line.
+- View the wedge from a three-quarter angle (`phi≈68°, theta≈-122°` with the
+  forward axis along −y, `frame_center` a little in front of the sphere). Looking
+  down the optical axis hides the wedge; looking side-on hides the image.
