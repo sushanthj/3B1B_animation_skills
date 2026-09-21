@@ -35,6 +35,7 @@ These are the most common failures. Load [rules/troubleshooting.md](rules/troubl
 13. **Long `Tex` silently wraps at ~80 chars** -- use a wide `TexTemplate` (geometry package) and `scale_to_fit_width`.
 14. **Parallel renders crash on `.dvi` conversion** -- they share `media/Tex` and delete each other's files. Add `--no_latex_cleanup`.
 15. **3D labels with updaters vanish** -- under Cairo use a fixed-in-frame label moved via `self.camera.project_point(...)`, and re-register `Integer` readouts with `camera.add_fixed_in_frame_mobjects` in the updater (see [rules/three-d.md](rules/three-d.md)).
+16. **`always_redraw` of an `ImageMobject` crashes with "pixel array shapes incompatible"** -- the array shape must stay constant, and the redraw must return one `ImageMobject`, not a `Group`. `FadeOut(VGroup(...))` cannot contain an image: use `Group` (see [rules/rendered-toy-worlds.md](rules/rendered-toy-worlds.md)).
 
 ## Scripts and Templates
 
@@ -42,6 +43,7 @@ Claude can copy and adapt these starter files instead of writing from scratch:
 
 - [scripts/safe_manim.py](scripts/safe_manim.py) -- drop-in wrappers that prevent the 6 crash gotchas (import instead of raw Manim calls)
 - [scripts/render_scene.sh](scripts/render_scene.sh) -- render a single scene with quality selection
+- [scripts/software_renderer.py](scripts/software_renderer.py) -- numpy z-buffer renderer with explicit (K, R, t) cameras, shadows, a textured camera rig; for explainers about cameras, pixels, depth and occlusion (renders become ImageMobjects)
 - [templates/style.py](templates/style.py) -- shared color palette and helper functions for any project
 - [templates/equation_explainer.py](templates/equation_explainer.py) -- dim-and-reveal equation scene template
 - [templates/paper_explainer.py](templates/paper_explainer.py) -- 5-section paper explainer scaffold
@@ -83,6 +85,7 @@ Load the relevant rule file for the task at hand. Claude should read only what i
 ### Dynamic and 3D
 - [rules/updaters-trackers.md](rules/updaters-trackers.md) -- ValueTracker, add_updater, always_redraw
 - [rules/three-d.md](rules/three-d.md) -- ThreeDScene, camera angles, surfaces, 3D shapes
+- [rules/rendered-toy-worlds.md](rules/rendered-toy-worlds.md) -- **computer-vision explainers:** render a toy 3D world offline (software_renderer.py) through several explicit cameras, show renders as images, draw overlays through the same projection; not ThreeDScene. Run the released models on the rendered frames before animating a claim about them
 - [rules/moving-camera.md](rules/moving-camera.md) -- MovingCameraScene, zoom, pan, follow
 
 ### Visual Design (read for any explainer video)

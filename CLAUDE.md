@@ -8,11 +8,12 @@ When asked to create mathematical animations or explainer videos, read `skill/SK
 ## Key Paths
 
 - `skill/SKILL.md` — start here: 12 gotchas, rule index, quick start
-- `skill/rules/` — 24 rule files (animations, equations, visual design, production quality, etc.)
+- `skill/rules/` — 25 rule files (animations, equations, visual design, production quality, rendered toy worlds for vision papers, etc.)
 - `skill/templates/` — starter scene templates (style.py, equation and paper explainers)
 - `skill/scripts/safe_manim.py` — crash-prevention wrappers for common Manim pitfalls
+- `skill/scripts/software_renderer.py` — numpy renderer for explainers about cameras/pixels/depth/occlusion (see `skill/rules/rendered-toy-worlds.md`); prefer it over `ThreeDScene` for that kind of content
 
-Read only the rule files relevant to the current task. Do not load all 24 at once.
+Read only the rule files relevant to the current task. Do not load all 25 at once.
 
 ## Environment
 

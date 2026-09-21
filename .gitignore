@@ -6,3 +6,4 @@ media/
 scene.py
 animations/
 *.mp4
+*.npz
